@@ -1,0 +1,11 @@
+/venv/
+.idea
+.env
+sql.db### Example user template template
+### Example user template
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
