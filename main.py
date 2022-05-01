@@ -1,15 +1,29 @@
 import os
 import sys
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QDrag
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt, QMimeData, QUrl
 import memeLogic
 from dotenv import load_dotenv
+from pathlib import Path
 
 
 class Meme(QLabel):
-    def __int__(self, parent):
+    def __init__(self, parent, path):
         super().__init__(parent)
+        self.path = os.path.abspath(path)
+        pixmap = QPixmap(self.path)
         self.parent = parent
+        self.setPixmap(pixmap)
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() == Qt.LeftButton:
+            drag = QDrag(self)
+            mime = QMimeData()
+            meme_drop = QUrl(Path(self.path).as_uri())
+            mime.setUrls([meme_drop])
+            drag.setMimeData(mime)
+            drag.exec_(Qt.MoveAction)
 
 
 class Window(QMainWindow):
@@ -24,10 +38,12 @@ class Window(QMainWindow):
 
         button = QPushButton("SEARCH", self)
         button.setGeometry(400, 0, 100, 30)
-        button.clicked.connect(self.clickme)
+        button.clicked.connect(self.search_given_tags)
 
         self.textedit = QTextEdit(self)
         self.textedit.setGeometry(0, 0, 400, 30)
+        # self.textedit.keyPressEvent(Qt.Key_Enter)
+
         self.setAcceptDrops(True)
         self.show()
 
@@ -36,6 +52,7 @@ class Window(QMainWindow):
         e.accept()
 
     def dropEvent(self, e):
+        print("drop event")
         image_path = e.mimeData().text()
         meme_tags = self.getText()
         memeLogic.insert(image_path, meme_tags)
@@ -44,15 +61,13 @@ class Window(QMainWindow):
         for i in reversed(range(self.layout.count())):
             self.layout.itemAt(i).widget().setParent(None)
 
-    def clickme(self):
+    def search_given_tags(self):
         keywords = self.textedit.toPlainText()
         self.clear_memes()
         memes = memeLogic.get_memes_from_wasabi(memeLogic.find_memes([keywords]))
         for meme in memes:
-            label = QLabel(self)
-            pixmap = QPixmap(os.path.abspath(meme))
-            label.setPixmap(pixmap)
-            self.layout.addWidget(label)
+            meme_widget = Meme(self, meme)
+            self.layout.addWidget(meme_widget)
 
     def getText(self):
         text, okPressed = QInputDialog.getText(self, "Meme Tags", "Separate Tags with a comma:", QLineEdit.Normal, "")
