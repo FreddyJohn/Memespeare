@@ -1,8 +1,8 @@
 /venv/
-.idea
 .env
-sql.db### Example user template template
-### Example user template
+sql.db
+/tmp/
+
 
 # IntelliJ project files
 .idea
